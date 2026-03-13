@@ -1,0 +1,41 @@
+# 行为日志
+
+> 全过程操作的主记录链。每条记录为一行 JSON 对象（JSON Lines 格式），携带唯一动作 ID，供 `checkpoint.md` 和 `timeline.md` 引用定位。
+> 使用 `scripts/read_actions_log` 脚本读取和查询日志，避免直接用 AI 解析以减少 token 消耗。
+
+## 字段说明
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `action_id` | string | 唯一动作 ID，格式 `A` + 三位顺序编号（A001、A002...），全局递增 |
+| `time` | string | 操作时间，格式 `YYYY-MM-DD HH:MM` |
+| `step` | string | 步骤标识，如 `step-0-init`、`step-1-collection` |
+| `type` | string | 动作类型（见下表） |
+| `status` | string | 状态码：`started` / `completed` / `failed` / `skipped` |
+| `message` | string | 操作描述 |
+| `files` | array | 关联文件路径列表 |
+| `terminal_input` | string | 终端输入命令（仅终端操作时记录） |
+| `terminal_output` | string | 终端输出摘要（仅终端操作时记录） |
+
+## 动作类型
+
+| 类型 | 含义 | 出现阶段 |
+|------|------|---------|
+| `INIT` | 项目初始化 | step-0 |
+| `SEARCH` | 执行检索 | step-1 |
+| `CAPTURE` | 保存来源 | step-1 |
+| `EVAL` | 可用性评估 | step-2 |
+| `REASON` | 逻辑推理 | step-3 |
+| `VERIFY` | 事实核验 | step-3 |
+| `VALIDATE` | 学术校验 | step-3 |
+| `GUIDE` | 写作指导 | step-3 |
+| `DRAFT` | 撰写草稿 | step-4 |
+| `EDIT` | 修改内容 | step-4 |
+| `REVIEW` | 质检 | step-5 |
+| `DECISION` | 关键决策 | 任意阶段 |
+| `DELIVER` | 交付 | step-5 |
+| `RESUME` | 断点恢复 | 任意阶段 |
+
+## 日志
+
+{"action_id":"A001","time":"YYYY-MM-DD HH:MM","step":"step-0-init","type":"INIT","status":"completed","message":"项目初始化完成","files":["task-brief.md","checkpoint.md"]}

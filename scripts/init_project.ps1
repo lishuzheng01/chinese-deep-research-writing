@@ -1,0 +1,192 @@
+<#
+.SYNOPSIS
+    中文深度研究写作 - 项目初始化脚本（PowerShell 版）
+
+.DESCRIPTION
+    创建标准项目目录结构，复制模板文件，生成初始化日志与 README。
+
+.PARAMETER ArticleTitle
+    文章标题，将作为项目目录名。
+
+.PARAMETER ChapterCount
+    章节数量，默认为 4。
+
+.EXAMPLE
+    .\init_project.ps1 -ArticleTitle "平台劳动者权益保障研究" -ChapterCount 5
+    .\init_project.ps1 "平台劳动者权益保障研究"
+#>
+
+param(
+    [Parameter(Mandatory = $true, Position = 0)]
+    [string]$ArticleTitle,
+
+    [Parameter(Position = 1)]
+    [int]$ChapterCount = 4
+)
+
+$ErrorActionPreference = "Stop"
+
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$TemplateDir = Join-Path (Split-Path -Parent $ScriptDir) "templates"
+$ProjectDir = Join-Path "research-projects" $ArticleTitle
+
+Write-Host "正在创建项目目录: $ProjectDir"
+
+# ── 创建目录结构 ──
+New-Item -ItemType Directory -Path (Join-Path $ProjectDir "00-project-meta") -Force | Out-Null
+
+for ($i = 1; $i -le $ChapterCount; $i++) {
+    $ch = "chapter-{0:D2}" -f $i
+    New-Item -ItemType Directory -Path (Join-Path $ProjectDir "01-collection/$ch/sources/pass-01") -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $ProjectDir "01-collection/$ch/sources/pass-02") -Force | Out-Null
+}
+
+foreach ($folder in @("02-reasoning", "03-verification", "04-academic-validation",
+                       "05-writing-guide", "06-drafts", "07-delivery", "90-process-logs")) {
+    New-Item -ItemType Directory -Path (Join-Path $ProjectDir $folder) -Force | Out-Null
+}
+
+# ── 复制模板文件 ──
+$templateMap = @{
+    "00-project-meta"       = @("task-brief.md", "scope-and-constraints.md", "decision-log.md")
+    "02-reasoning"          = @("claim-map.md", "logic-chain.md", "contradiction-register.md")
+    "03-verification"       = @("fact-check-table.md", "cross-source-check.md", "unresolved-items.md")
+    "04-academic-validation" = @("concept-definitions.md", "method-validity.md", "citation-audit.md")
+    "05-writing-guide"      = @("chapter-outline.md", "argument-order.md", "style-guardrails.md")
+    "90-process-logs"       = @("actions.log", "timeline.md")
+}
+
+$chapterTemplates = @{
+    "01-collection" = @("source-index.md")
+}
+
+if (Test-Path $TemplateDir) {
+    foreach ($folder in $templateMap.Keys) {
+        foreach ($file in $templateMap[$folder]) {
+            $src = Join-Path $TemplateDir "$folder/$file"
+            $dst = Join-Path $ProjectDir "$folder/$file"
+            if (Test-Path $src) {
+                Copy-Item -Path $src -Destination $dst -Force
+            }
+        }
+    }
+
+    for ($i = 1; $i -le $ChapterCount; $i++) {
+        $ch = "chapter-{0:D2}" -f $i
+        foreach ($folder in $chapterTemplates.Keys) {
+            foreach ($file in $chapterTemplates[$folder]) {
+                $src = Join-Path $TemplateDir "$folder/$file"
+                $dst = Join-Path $ProjectDir "$folder/$ch/$file"
+                if (Test-Path $src) {
+                    Copy-Item -Path $src -Destination $dst -Force
+                }
+            }
+        }
+    }
+} else {
+    Write-Warning "模板目录不存在: $TemplateDir，跳过模板复制（目录结构已创建）"
+}
+
+# ── 写入初始化日志（JSON 格式） ──
+$initTime = Get-Date -Format "yyyy-MM-dd HH:mm"
+$logFile = Join-Path $ProjectDir "90-process-logs/actions.log"
+
+if (Test-Path $logFile) {
+    $logEntry = @{
+        action_id  = "A001"
+        time       = $initTime
+        step       = "step-0-init"
+        type       = "INIT"
+        status     = "completed"
+        message    = "项目初始化完成，标题: $ArticleTitle，章节数: $ChapterCount"
+        files      = @("task-brief.md", "checkpoint.md", "README.md")
+    } | ConvertTo-Json -Compress
+
+    Add-Content -Path $logFile -Value $logEntry -Encoding UTF8
+}
+
+# ── 生成 README.md ──
+$readmePath = Join-Path $ProjectDir "README.md"
+$readmeContent = @"
+# $ArticleTitle
+
+> 创建时间: $initTime | 章节数: $ChapterCount
+
+## 项目概述
+
+（请在此处用 3-5 句话描述本项目的研究内容与目标。结合主题、体裁、目标读者、核心问题等信息进行填写，不要过于简单也不要过于冗长。）
+
+## 项目结构
+
+| 目录 | 用途 |
+|------|------|
+| ``00-project-meta/`` | 任务定义、范围约束、决策日志、断点续传 |
+| ``01-collection/`` | 按章节组织的检索材料与可用性评估 |
+| ``02-reasoning/`` | 主张映射、逻辑链、矛盾登记 |
+| ``03-verification/`` | 事实核验、交叉来源核对 |
+| ``04-academic-validation/`` | 概念定义、方法校验、引用审计 |
+| ``05-writing-guide/`` | 章节提纲、论证顺序、风格约束 |
+| ``06-drafts/`` | 各章节初稿与全文汇总 |
+| ``07-delivery/`` | 最终交付稿与参考文献 |
+| ``90-process-logs/`` | 行为日志、时间线 |
+
+## 当前状态
+
+请查看 ``00-project-meta/checkpoint.md`` 获取最新进度。
+"@
+Set-Content -Path $readmePath -Value $readmeContent -Encoding UTF8
+
+# ── 初始化 checkpoint ──
+$checkpointSrc = Join-Path $TemplateDir "00-project-meta/checkpoint.md"
+$checkpointDst = Join-Path $ProjectDir "00-project-meta/checkpoint.md"
+
+if (Test-Path $checkpointSrc) {
+    Copy-Item -Path $checkpointSrc -Destination $checkpointDst -Force
+    $content = Get-Content -Path $checkpointDst -Raw -Encoding UTF8
+    $content = $content `
+        -replace '（当前步骤标识，如 step-1-collection）', 'step-0-init' `
+        -replace '\| status \| in-progress \|', '| status | completed |' `
+        -replace '（最后一条动作 ID，如 A012）', 'A001' `
+        -replace '（描述当前阶段内的详细进度。须具体到章节/子任务粒度。）', '项目初始化完成，所有目录与模板文件已就绪' `
+        -replace '（恢复后应执行的第一个具体操作。须精确到文件级别。）', '填写 task-brief.md，然后开始第 1 步检索' `
+        -replace 'YYYY-MM-DD HH:MM', $initTime
+    Set-Content -Path $checkpointDst -Value $content -Encoding UTF8
+} else {
+    $checkpointContent = @"
+# 断点续传状态
+
+| 字段 | 内容 |
+|------|------|
+| current_step | step-0-init |
+| status | completed |
+| last_action_id | A001 |
+| last_updated | $initTime |
+
+## 下一步动作
+
+填写 task-brief.md，然后开始第 1 步检索
+"@
+    Set-Content -Path $checkpointDst -Value $checkpointContent -Encoding UTF8
+}
+
+# ── 更新 timeline 初始记录 ──
+$timelineFile = Join-Path $ProjectDir "90-process-logs/timeline.md"
+if (Test-Path $timelineFile) {
+    $content = Get-Content -Path $timelineFile -Raw -Encoding UTF8
+    $content = $content -replace `
+        '\| YYYY-MM-DD HH:MM \| step-0-init \| 项目初始化完成 \| A001 \| task-brief\.md, checkpoint\.md \|', `
+        "| $initTime | step-0-init | 项目初始化完成 | A001 | task-brief.md, checkpoint.md, README.md |"
+    Set-Content -Path $timelineFile -Value $content -Encoding UTF8
+}
+
+Write-Host ""
+Write-Host "项目初始化完成"
+Write-Host "  路径: $ProjectDir"
+Write-Host "  标题: $ArticleTitle"
+Write-Host "  章节数: $ChapterCount"
+Write-Host ""
+Write-Host "下一步:"
+Write-Host "  1. 编辑 README.md 填写项目概述"
+Write-Host "  2. 编辑 00-project-meta/task-brief.md 填写任务定义"
+Write-Host "  3. 编辑 00-project-meta/scope-and-constraints.md 确定范围与约束"
+Write-Host "  4. 开始按章节执行检索"
