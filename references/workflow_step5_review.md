@@ -17,8 +17,8 @@
 
 ## checkpoint 更新
 
-- 开始时：`current_step` = `step-5-review`，`status` = `in-progress`
-- 质检通过后：`current_step` = `step-done`，`status` = `completed`
+- 开始时：`当前步骤` = `step-5-review`，`状态` = `in-progress`
+- 质检通过后：`当前步骤` = `step-done`，`状态` = `completed`
 
 ## 完成判定（DoD）
 

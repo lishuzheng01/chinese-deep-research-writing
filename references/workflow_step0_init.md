@@ -6,7 +6,7 @@
 2. 生成 `README.md`：结合主题、体裁、目标读者、核心问题，用 3-5 句话概要描述研究内容与目标。
 3. 填写 `00-project-meta/task-brief.md`：主题、目标读者、体裁、产出等级（提纲/初稿/定稿）、篇幅要求。
 4. 填写 `00-project-meta/scope-and-constraints.md`：范围界定与硬约束。
-5. 更新 `00-project-meta/checkpoint.md`：`current_step` = `step-0-init`，`status` = `completed`。
+5. 更新 `00-project-meta/checkpoint.md`：`当前步骤` = `step-0-init`，`状态` = `completed`。
 
 ## 初始化脚本
 

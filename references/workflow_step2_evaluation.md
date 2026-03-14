@@ -26,9 +26,9 @@
 
 ## checkpoint 更新
 
-- 开始时：`current_step` = `step-2-evaluation`，`status` = `in-progress`
-- 进行中：更新 `progress_detail`（如「chapter-01 评估完成」）
-- 完成后：`status` = `completed`
+- 开始时：`当前步骤` = `step-2-evaluation`，`状态` = `in-progress`
+- 进行中：更新 `进度明细`（如「chapter-01 评估完成」）
+- 完成后：`状态` = `completed`
 
 ## 完成标志
 

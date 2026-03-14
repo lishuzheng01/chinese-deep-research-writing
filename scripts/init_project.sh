@@ -16,11 +16,70 @@ fi
 ARTICLE_TITLE="$1"
 CHAPTER_COUNT="${2:-4}"
 
+# ── 标题清洗 ──
+sanitize_dirname() {
+  local cleaned="$1"
+  # 替换文件系统不允许的字符
+  cleaned=$(echo "$cleaned" | sed 's/[\\/:*?"<>|]/-/g')
+  cleaned=$(echo "$cleaned" | sed 's/[：？！＊＜＞｜]/-/g')
+  cleaned=$(echo "$cleaned" | sed 's/-\{2,\}/-/g')
+  cleaned=$(echo "$cleaned" | sed 's/^[- ]*//;s/[- ]*$//')
+  echo "$cleaned"
+}
+
+DIR_NAME=$(sanitize_dirname "$ARTICLE_TITLE")
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TEMPLATE_DIR="${SCRIPT_DIR}/../templates"
-PROJECT_DIR="research-projects/${ARTICLE_TITLE}"
+PROJECT_DIR="research-projects/${DIR_NAME}"
+
+# ── 幂等性保护 ──
+if [ -d "${PROJECT_DIR}" ]; then
+  echo "错误：项目目录已存在: ${PROJECT_DIR}"
+  echo "如需重新初始化，请先手动删除或重命名该目录。"
+  exit 1
+fi
 
 echo "正在创建项目目录: ${PROJECT_DIR}"
+
+# ── 模板完整性校验 ──
+REQUIRED_TEMPLATES=(
+  "00-project-meta/task-brief.md"
+  "00-project-meta/scope-and-constraints.md"
+  "00-project-meta/checkpoint.md"
+  "01-collection/source-index.md"
+  "01-collection/source-capture.md"
+  "02-reasoning/claim-map.md"
+  "02-reasoning/logic-chain.md"
+  "02-reasoning/contradiction-register.md"
+  "03-verification/fact-check-table.md"
+  "03-verification/cross-source-check.md"
+  "03-verification/unresolved-items.md"
+  "04-academic-validation/concept-definitions.md"
+  "04-academic-validation/method-validity.md"
+  "04-academic-validation/citation-audit.md"
+  "05-writing-guide/chapter-outline.md"
+  "05-writing-guide/argument-order.md"
+  "05-writing-guide/style-guardrails.md"
+  "06-drafts/chapter-draft.md"
+  "07-delivery/references.md"
+)
+
+if [ -d "${TEMPLATE_DIR}" ]; then
+  MISSING=()
+  for t in "${REQUIRED_TEMPLATES[@]}"; do
+    if [ ! -f "${TEMPLATE_DIR}/${t}" ]; then
+      MISSING+=("  - ${t}")
+    fi
+  done
+  if [ ${#MISSING[@]} -gt 0 ]; then
+    echo "错误：以下模板文件缺失，请检查 templates 目录："
+    printf '%s\n' "${MISSING[@]}"
+    exit 1
+  fi
+else
+  echo "⚠️  模板目录不存在: ${TEMPLATE_DIR}，将只创建目录结构，不复制模板。"
+fi
 
 # ── 创建目录结构 ──
 mkdir -p "${PROJECT_DIR}/00-project-meta"
@@ -34,6 +93,9 @@ for folder in 02-reasoning 03-verification 04-academic-validation \
               05-writing-guide 06-drafts 07-delivery; do
   mkdir -p "${PROJECT_DIR}/${folder}"
 done
+
+# 用户自备材料目录
+mkdir -p "${PROJECT_DIR}/01-collection/user-provided/originals"
 
 # ── 复制模板文件 ──
 if [ -d "${TEMPLATE_DIR}" ]; then
@@ -69,6 +131,12 @@ if [ -d "${TEMPLATE_DIR}" ]; then
     [ -f "${TEMPLATE_DIR}/05-writing-guide/${f}" ] && cp "${TEMPLATE_DIR}/05-writing-guide/${f}" "${PROJECT_DIR}/05-writing-guide/${f}"
   done
 
+  # 06-drafts
+  [ -f "${TEMPLATE_DIR}/06-drafts/chapter-draft.md" ] && cp "${TEMPLATE_DIR}/06-drafts/chapter-draft.md" "${PROJECT_DIR}/06-drafts/chapter-draft.md"
+
+  # 07-delivery
+  [ -f "${TEMPLATE_DIR}/07-delivery/references.md" ] && cp "${TEMPLATE_DIR}/07-delivery/references.md" "${PROJECT_DIR}/07-delivery/references.md"
+
 else
   echo "⚠️  模板目录不存在: ${TEMPLATE_DIR}，跳过模板复制（目录结构已创建）"
 fi
@@ -91,6 +159,7 @@ cat > "${PROJECT_DIR}/README.md" <<EOF
 |------|------|
 | \`00-project-meta/\` | 任务定义、范围约束、断点续传 |
 | \`01-collection/\` | 按章节组织的检索材料与可用性评估 |
+| \`01-collection/user-provided/\` | 用户自备材料导入 |
 | \`02-reasoning/\` | 主张映射、逻辑链、矛盾登记 |
 | \`03-verification/\` | 事实核验、交叉来源核对 |
 | \`04-academic-validation/\` | 概念定义、方法校验、引用审计 |
@@ -110,11 +179,10 @@ CHECKPOINT_DST="${PROJECT_DIR}/00-project-meta/checkpoint.md"
 if [ -f "${CHECKPOINT_SRC}" ]; then
   cp "${CHECKPOINT_SRC}" "${CHECKPOINT_DST}"
   sed -i \
-    -e "s|（当前步骤标识，如 step-1-collection）|step-0-init|g" \
-    -e "s|\| status \| not-started \||\| status \| completed \||g" \
-    -e "s|\| status \| in-progress \||\| status \| completed \||g" \
-    -e "s|（描述当前阶段内的详细进度。须具体到章节/子任务粒度。）|项目初始化完成，所有目录与模板文件已就绪|g" \
-    -e "s|（恢复后应执行的第一个具体操作。须精确到文件级别。）|填写 task-brief.md，然后开始第 1 步检索|g" \
+    -e "s|（如 step-1-collection）|step-0-init|g" \
+    -e "s|\| 状态 \| not-started \||\| 状态 \| completed \||g" \
+    -e "s|（当前阶段内的具体进度，1-2 句话。）|项目初始化完成，所有目录与模板文件已就绪|g" \
+    -e "s|（恢复后应执行的第一个具体操作，精确到文件级别。）|填写 task-brief.md，然后开始第 1 步检索|g" \
     -e "s|YYYY-MM-DD HH:MM|${INIT_TIME}|g" \
     "${CHECKPOINT_DST}"
 else
@@ -123,9 +191,9 @@ else
 
 | 字段 | 内容 |
 |------|------|
-| current_step | step-0-init |
-| status | completed |
-| last_updated | ${INIT_TIME} |
+| 当前步骤 | step-0-init |
+| 状态 | completed |
+| 最后更新 | ${INIT_TIME} |
 
 ## 进度明细
 

@@ -27,9 +27,9 @@
 
 ## checkpoint 更新
 
-- 开始时：`current_step` = `step-4-writing`，`status` = `in-progress`
-- 进行中：更新 `progress_detail`（如「已完成 1-3 章，第 4 章写作中」）
-- 完成后：`status` = `completed`
+- 开始时：`当前步骤` = `step-4-writing`，`状态` = `in-progress`
+- 进行中：更新 `进度明细`（如「已完成 1-3 章，第 4 章写作中」）
+- 完成后：`状态` = `completed`
 
 ## 完成标志
 

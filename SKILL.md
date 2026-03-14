@@ -43,6 +43,8 @@ research-projects/
             source-index.md
          chapter-02/
             ...
+         user-provided/
+            originals/
       02-reasoning/
          claim-map.md
          logic-chain.md
@@ -128,16 +130,16 @@ research-projects/
 仅使用 00-project-meta/checkpoint.md 作为进度快照文件，不再维护 actions.log、timeline.md、decision-log.md。
 
 checkpoint 至少包含：
-- current_step
-- status
-- last_updated
-- progress_detail
-- next_action
+- 当前步骤
+- 状态
+- 最后更新
+- 进度明细
+- 下一步动作
 - 已完成步骤
 - 关键决策
 
 恢复时：
-1. 读取 checkpoint.md 获取 current_step、status、next_action。
+1. 读取 checkpoint.md 获取当前步骤、状态、下一步动作。
 2. 校验当前步骤关键产出文件是否存在且非空。
 3. 从 next_action 指定位置继续执行，而非从头开始。
 
@@ -145,19 +147,7 @@ checkpoint 至少包含：
 
 ## 去 AI 痕迹写作规范
 
-### 必须避免
-
-- 套话起手（如“随着时代发展”）
-- 空洞拔高（无证据的大词结论）
-- 三段式机械排比与口号化收束
-- 模糊主语替代真实来源（如“有研究指出”但无出处）
-
-### 建议写法
-
-- 先给可核验事实，再给解释
-- 段内保持“主张 -> 机制 -> 证据 -> 小结/过渡”
-- 有争议观点注明分歧来源
-- 结论只覆盖证据支持的边界
+详细规则见 references/anti_ai_style_guide.md，写作与质检阶段按需加载。
 
 ## 体裁与产出等级
 
@@ -183,8 +173,10 @@ checkpoint 至少包含：
 ## 资源文件加载建议
 
 - 交付拆分规则：references/markdown_delivery_rules.md
-- 体裁模板：references/genre_templates.md
+- 体裁模板：references/genre_templates.md（或按体裁加载 references/genres/ 下的对应文件）
 - 引用规范：references/gbt7714_quick_guide.md
+- 去 AI 痕迹规范：references/anti_ai_style_guide.md
+- 上下文预算：references/context_budget.md
 
 ## 分支决策规则
 

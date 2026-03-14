@@ -14,13 +14,33 @@
    - 原始抓取文本（完整保留）
 4. 无论后续是否使用，均在 `source-index.md` 登记为 `used` 或 `unused`，并完成可用性评估字段填写。
 
+## 用户自备材料导入
+
+当用户提供了自有文档（PDF、Word、网页截图、笔记等），按以下规则纳入检索体系：
+
+1. **存放路径**：`01-collection/user-provided/`，每份材料单独保存为 `Uxxx-材料短名.md`。
+2. **元数据要求**：与 search-web 来源相同，但"检索词"字段填写"用户提供"，"抓取时间"填写导入时间。
+3. **评估流程**：用户自备材料同样需要在 `source-index.md` 中登记并完成六维可用性评估，不可跳过。
+4. **来源标记**：在 source-index 的"检索轮次"字段中标记为 `user-provided`，以区分自动检索来源。
+5. **原始保留**：用户提供的原始文件保存到 `01-collection/user-provided/originals/`，提取的文本版本按标准格式存为 Markdown。
+
+## 检索工具降级方案
+
+当 search-web 工具不可用时：
+
+1. **fetch_webpage 替代**：如果用户提供了具体 URL，使用 fetch_webpage 获取页面内容并按标准格式保存。
+2. **用户手动提供**：引导用户手动检索并将材料粘贴到对话中，由模型按 source-capture 格式保存。
+3. **已有材料优先**：充分利用用户自备材料（按上述导入规则处理），减少对在线检索的依赖。
+4. **标注限制**：在 `scope-and-constraints.md` 中明确标注"检索受限"，在最终交付稿中声明材料来源的局限性。
+
 ## checkpoint 更新
 
-- 开始时：`current_step` = `step-1-collection`，`status` = `in-progress`
-- 进行中：更新 `progress_detail`（如「chapter-01 检索完成，已获取 5 条来源」）
-- 完成后：`status` = `completed`，更新「已完成步骤」
+- 开始时：`当前步骤` = `step-1-collection`，`状态` = `in-progress`
+- 进行中：更新 `进度明细`（如「chapter-01 检索完成，已获取 5 条来源」）
+- 完成后：`状态` = `completed`，更新「已完成步骤」
 
 ## 完成标志
 
 - 所有章节的检索材料已本地保存
 - 每条来源在 source-index.md 中有登记
+- 用户自备材料（如有）已按规则导入并登记

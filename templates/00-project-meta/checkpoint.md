@@ -6,9 +6,9 @@
 
 | 字段 | 内容 |
 |------|------|
-| current_step | （如 step-1-collection） |
-| status | not-started |
-| last_updated | YYYY-MM-DD HH:MM |
+| 当前步骤 | （如 step-1-collection） |
+| 状态 | not-started |
+| 最后更新 | YYYY-MM-DD HH:MM |
 
 ## 进度明细
 

@@ -3,10 +3,10 @@
     中文深度研究写作 - 项目初始化脚本（PowerShell 版）
 
 .DESCRIPTION
-    创建标准项目目录结构，复制模板文件，生成初始化日志与 README。
+    创建标准项目目录结构，复制模板文件，生成 README 与 checkpoint。
 
 .PARAMETER ArticleTitle
-    文章标题，将作为项目目录名。
+    文章标题，将作为项目目录名（不合法字符会被自动替换）。
 
 .PARAMETER ChapterCount
     章节数量，默认为 4。
@@ -26,11 +26,66 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# ── 标题清洗 ──
+function Sanitize-DirName([string]$title) {
+    $cleaned = $title -replace '[\\/:*?"<>|]', '-'
+    $cleaned = $cleaned -replace '[：？！＊＜＞｜]', '-'
+    $cleaned = $cleaned -replace '-{2,}', '-'
+    $cleaned = $cleaned.Trim('- ')
+    return $cleaned
+}
+
+$DirName = Sanitize-DirName $ArticleTitle
+
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $TemplateDir = Join-Path (Split-Path -Parent $ScriptDir) "templates"
-$ProjectDir = Join-Path "research-projects" $ArticleTitle
+$ProjectDir = Join-Path "research-projects" $DirName
+
+# ── 幂等性保护 ──
+if (Test-Path $ProjectDir) {
+    Write-Error "错误：项目目录已存在: $ProjectDir`n如需重新初始化，请先手动删除或重命名该目录。"
+    exit 1
+}
 
 Write-Host "正在创建项目目录: $ProjectDir"
+
+# ── 模板完整性校验 ──
+$requiredTemplates = @(
+    "00-project-meta/task-brief.md",
+    "00-project-meta/scope-and-constraints.md",
+    "00-project-meta/checkpoint.md",
+    "01-collection/source-index.md",
+    "01-collection/source-capture.md",
+    "02-reasoning/claim-map.md",
+    "02-reasoning/logic-chain.md",
+    "02-reasoning/contradiction-register.md",
+    "03-verification/fact-check-table.md",
+    "03-verification/cross-source-check.md",
+    "03-verification/unresolved-items.md",
+    "04-academic-validation/concept-definitions.md",
+    "04-academic-validation/method-validity.md",
+    "04-academic-validation/citation-audit.md",
+    "05-writing-guide/chapter-outline.md",
+    "05-writing-guide/argument-order.md",
+    "05-writing-guide/style-guardrails.md",
+    "06-drafts/chapter-draft.md",
+    "07-delivery/references.md"
+)
+
+if (Test-Path $TemplateDir) {
+    $missing = @()
+    foreach ($t in $requiredTemplates) {
+        if (-not (Test-Path (Join-Path $TemplateDir $t))) {
+            $missing += $t
+        }
+    }
+    if ($missing.Count -gt 0) {
+        Write-Error "错误：以下模板文件缺失，请检查 templates 目录：`n$($missing -join "`n")"
+        exit 1
+    }
+} else {
+    Write-Warning "模板目录不存在: $TemplateDir，将只创建目录结构，不复制模板。"
+}
 
 # ── 创建目录结构 ──
 New-Item -ItemType Directory -Path (Join-Path $ProjectDir "00-project-meta") -Force | Out-Null
@@ -45,6 +100,9 @@ foreach ($folder in @("02-reasoning", "03-verification", "04-academic-validation
                        "05-writing-guide", "06-drafts", "07-delivery")) {
     New-Item -ItemType Directory -Path (Join-Path $ProjectDir $folder) -Force | Out-Null
 }
+
+# 用户自备材料目录
+New-Item -ItemType Directory -Path (Join-Path $ProjectDir "01-collection/user-provided/originals") -Force | Out-Null
 
 # ── 复制模板文件 ──
 $templateMap = @{
@@ -82,6 +140,21 @@ if (Test-Path $TemplateDir) {
             }
         }
     }
+
+    # 额外全局模板
+    $globalTemplates = @{
+        "06-drafts" = @("chapter-draft.md")
+        "07-delivery" = @("references.md")
+    }
+    foreach ($folder in $globalTemplates.Keys) {
+        foreach ($file in $globalTemplates[$folder]) {
+            $src = Join-Path $TemplateDir "$folder/$file"
+            $dst = Join-Path $ProjectDir "$folder/$file"
+            if (Test-Path $src) {
+                Copy-Item -Path $src -Destination $dst -Force
+            }
+        }
+    }
 } else {
     Write-Warning "模板目录不存在: $TemplateDir，跳过模板复制（目录结构已创建）"
 }
@@ -105,6 +178,7 @@ $readmeContent = @"
 |------|------|
 | ``00-project-meta/`` | 任务定义、范围约束、断点续传 |
 | ``01-collection/`` | 按章节组织的检索材料与可用性评估 |
+| ``01-collection/user-provided/`` | 用户自备材料导入 |
 | ``02-reasoning/`` | 主张映射、逻辑链、矛盾登记 |
 | ``03-verification/`` | 事实核验、交叉来源核对 |
 | ``04-academic-validation/`` | 概念定义、方法校验、引用审计 |
@@ -126,11 +200,10 @@ if (Test-Path $checkpointSrc) {
     Copy-Item -Path $checkpointSrc -Destination $checkpointDst -Force
     $content = Get-Content -Path $checkpointDst -Raw -Encoding UTF8
     $content = $content `
-        -replace '（当前步骤标识，如 step-1-collection）', 'step-0-init' `
-        -replace '\| status \| not-started \|', '| status | completed |' `
-        -replace '\| status \| in-progress \|', '| status | completed |' `
-        -replace '（描述当前阶段内的详细进度。须具体到章节/子任务粒度。）', '项目初始化完成，所有目录与模板文件已就绪' `
-        -replace '（恢复后应执行的第一个具体操作。须精确到文件级别。）', '填写 task-brief.md，然后开始第 1 步检索' `
+        -replace '（如 step-1-collection）', 'step-0-init' `
+        -replace '\| 状态 \| not-started \|', '| 状态 | completed |' `
+        -replace '（当前阶段内的具体进度，1-2 句话。）', '项目初始化完成，所有目录与模板文件已就绪' `
+        -replace '（恢复后应执行的第一个具体操作，精确到文件级别。）', '填写 task-brief.md，然后开始第 1 步检索' `
         -replace 'YYYY-MM-DD HH:MM', $initTime
     Set-Content -Path $checkpointDst -Value $content -Encoding UTF8
 } else {
@@ -139,9 +212,9 @@ if (Test-Path $checkpointSrc) {
 
 | 字段 | 内容 |
 |------|------|
-| current_step | step-0-init |
-| status | completed |
-| last_updated | $initTime |
+| 当前步骤 | step-0-init |
+| 状态 | completed |
+| 最后更新 | $initTime |
 
 ## 进度明细
 

@@ -43,3 +43,10 @@
 | templates/05-writing-guide/chapter-outline.md | 章节提纲与证据计划 | `05-writing-guide/` |
 | templates/05-writing-guide/argument-order.md | 论证顺序与过渡策略 | `05-writing-guide/` |
 | templates/05-writing-guide/style-guardrails.md | 体裁风格约束（含去 AI 检查清单） | `05-writing-guide/` |
+
+## F 类：草稿与交付模板
+
+| 模板文件 | 用途 | 目标路径 |
+|---------|------|----------|
+| templates/06-drafts/chapter-draft.md | 章节草稿头部模板 | `06-drafts/` |
+| templates/07-delivery/references.md | 参考文献汇总模板（GB/T 7714 格式） | `07-delivery/` |
