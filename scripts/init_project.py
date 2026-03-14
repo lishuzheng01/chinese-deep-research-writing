@@ -49,7 +49,6 @@ def main():
         "05-writing-guide",
         "06-drafts",
         "07-delivery",
-        "90-process-logs",
     ]:
         (project_dir / folder).mkdir(parents=True, exist_ok=True)
 
@@ -58,7 +57,6 @@ def main():
         "00-project-meta": [
             "task-brief.md",
             "scope-and-constraints.md",
-            "decision-log.md",
         ],
         "02-reasoning": [
             "claim-map.md",
@@ -79,10 +77,6 @@ def main():
             "chapter-outline.md",
             "argument-order.md",
             "style-guardrails.md",
-        ],
-        "90-process-logs": [
-            "actions.log",
-            "timeline.md",
         ],
     }
 
@@ -112,22 +106,7 @@ def main():
     else:
         print(f"模板目录不存在: {template_dir}，跳过模板复制（目录结构已创建）")
 
-    # ── 写入初始化日志 ──
-    log_file = project_dir / "90-process-logs" / "actions.log"
     init_time = datetime.now().strftime("%Y-%m-%d %H:%M")
-    if log_file.is_file():
-        import json as _json
-        log_entry = _json.dumps({
-            "action_id": "A001",
-            "time": init_time,
-            "step": "step-0-init",
-            "type": "INIT",
-            "status": "completed",
-            "message": f"项目初始化完成，标题: {article_title}，章节数: {chapter_count}",
-            "files": ["task-brief.md", "checkpoint.md", "README.md"]
-        }, ensure_ascii=False)
-        with open(log_file, "a", encoding="utf-8") as f:
-            f.write(log_entry + "\n")
 
     # ── 生成 README.md ──
     readme_path = project_dir / "README.md"
@@ -143,7 +122,7 @@ def main():
 
 | 目录 | 用途 |
 |------|------|
-| `00-project-meta/` | 任务定义、范围约束、决策日志、断点续传 |
+| `00-project-meta/` | 任务定义、范围约束、断点续传 |
 | `01-collection/` | 按章节组织的检索材料与可用性评估 |
 | `02-reasoning/` | 主张映射、逻辑链、矛盾登记 |
 | `03-verification/` | 事实核验、交叉来源核对 |
@@ -151,7 +130,6 @@ def main():
 | `05-writing-guide/` | 章节提纲、论证顺序、风格约束 |
 | `06-drafts/` | 各章节初稿与全文汇总 |
 | `07-delivery/` | 最终交付稿与参考文献 |
-| `90-process-logs/` | 行为日志、时间线 |
 
 ## 当前状态
 
@@ -171,9 +149,9 @@ def main():
         content = content.replace(
             "（当前步骤标识，如 step-1-collection）", "step-0-init"
         ).replace(
-            "| status | in-progress |", "| status | completed |"
+            "| status | not-started |", "| status | completed |"
         ).replace(
-            "（最后一条动作 ID，如 A012）", "A001"
+            "| status | in-progress |", "| status | completed |"
         ).replace(
             "（描述当前阶段内的详细进度。须具体到章节/子任务粒度。）",
             "项目初始化完成，所有目录与模板文件已就绪"
@@ -194,23 +172,12 @@ def main():
                 f"| 字段 | 内容 |\n|------|------|\n"
                 f"| current_step | step-0-init |\n"
                 f"| status | completed |\n"
-                f"| last_action_id | A001 |\n"
                 f"| last_updated | {init_time} |\n\n"
+                f"## 进度明细\n\n"
+                f"项目初始化完成，所有目录与模板文件已就绪。\n\n"
                 f"## 下一步动作\n\n"
                 f"填写 task-brief.md，然后开始第 1 步检索\n"
             )
-
-    # ── 更新 timeline 初始记录 ──
-    timeline_file = project_dir / "90-process-logs" / "timeline.md"
-    if timeline_file.is_file():
-        with open(timeline_file, "r", encoding="utf-8") as f:
-            content = f.read()
-        content = content.replace(
-            "| YYYY-MM-DD HH:MM | step-0-init | 项目初始化完成 | A001 | task-brief.md, checkpoint.md |",
-            f"| {init_time} | step-0-init | 项目初始化完成 | A001 | task-brief.md, checkpoint.md, README.md |"
-        )
-        with open(timeline_file, "w", encoding="utf-8") as f:
-            f.write(content)
 
     print()
     print("项目初始化完成")

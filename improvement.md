@@ -25,3 +25,43 @@
  
 3.合并相似模板
  - 合并检索模板：将 source-index.md 和 availability-eval.md 合并
+
+# 版本2.0.0
+
+1.全面简化日志记录，仅满足断点传续功能即可。
+2.增强渐进式披露的特性，缓解模型的记忆负担，提升模型的理解和响应能力。
+
+## 实施明细
+
+1.日志体系简化为单文件 checkpoint
+ - 保留：`templates/00-project-meta/checkpoint.md`
+ - 删除：`templates/00-project-meta/decision-log.md`
+ - 删除：`templates/90-process-logs/`（含 `actions.log`、`timeline.md`）
+ - 删除：`scripts/read_actions_log.py`、`scripts/read_actions_log.sh`、`scripts/read_actions_log.ps1`
+
+2.断点续传协议更新
+ - checkpoint 模板字段精简为：`current_step`、`status`、`last_updated`、`progress_detail`、`next_action`、`已完成步骤`、`关键决策`
+ - 不再使用动作 ID（A001/A002）与多文件联动记录
+
+3.渐进式披露落地
+ - `SKILL.md` 重构为入口文档，只保留概览与步骤入口
+ - 新增并启用按需加载文件：
+   - `references/workflow_step0_init.md`
+   - `references/workflow_step1_collection.md`
+   - `references/workflow_step2_evaluation.md`
+   - `references/workflow_step3_reasoning.md`
+   - `references/workflow_step4_writing.md`
+   - `references/workflow_step5_review.md`
+   - `references/template_guide.md`
+   - `references/checkpoint_protocol.md`
+
+4.初始化脚本同步升级
+ - 更新：`scripts/init_project.py`
+ - 更新：`scripts/init_project.sh`
+ - 更新：`scripts/init_project.ps1`
+ - 调整内容：
+   - 移除 `90-process-logs` 目录创建
+   - 移除 `decision-log.md`、`actions.log`、`timeline.md` 的模板复制
+   - 移除初始化日志写入逻辑
+   - README 项目结构说明同步去除旧日志目录描述
+   - checkpoint 初始化逻辑改为简化字段模型

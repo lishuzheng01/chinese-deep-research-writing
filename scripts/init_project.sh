@@ -31,14 +31,14 @@ for i in $(seq -w 1 "${CHAPTER_COUNT}"); do
 done
 
 for folder in 02-reasoning 03-verification 04-academic-validation \
-              05-writing-guide 06-drafts 07-delivery 90-process-logs; do
+              05-writing-guide 06-drafts 07-delivery; do
   mkdir -p "${PROJECT_DIR}/${folder}"
 done
 
 # ── 复制模板文件 ──
 if [ -d "${TEMPLATE_DIR}" ]; then
   # 00-project-meta
-  for f in task-brief.md scope-and-constraints.md decision-log.md; do
+  for f in task-brief.md scope-and-constraints.md; do
     [ -f "${TEMPLATE_DIR}/00-project-meta/${f}" ] && cp "${TEMPLATE_DIR}/00-project-meta/${f}" "${PROJECT_DIR}/00-project-meta/${f}"
   done
 
@@ -69,24 +69,11 @@ if [ -d "${TEMPLATE_DIR}" ]; then
     [ -f "${TEMPLATE_DIR}/05-writing-guide/${f}" ] && cp "${TEMPLATE_DIR}/05-writing-guide/${f}" "${PROJECT_DIR}/05-writing-guide/${f}"
   done
 
-  # 90-process-logs
-  for f in actions.log timeline.md; do
-    [ -f "${TEMPLATE_DIR}/90-process-logs/${f}" ] && cp "${TEMPLATE_DIR}/90-process-logs/${f}" "${PROJECT_DIR}/90-process-logs/${f}"
-  done
-
 else
   echo "⚠️  模板目录不存在: ${TEMPLATE_DIR}，跳过模板复制（目录结构已创建）"
 fi
 
-# ── 写入初始化日志（JSON 格式） ──
 INIT_TIME="$(date '+%Y-%m-%d %H:%M')"
-LOG_FILE="${PROJECT_DIR}/90-process-logs/actions.log"
-
-if [ -f "${LOG_FILE}" ]; then
-  # 使用 printf 写入 JSON 行，避免特殊字符问题
-  printf '{"action_id":"A001","time":"%s","step":"step-0-init","type":"INIT","status":"completed","message":"项目初始化完成，标题: %s，章节数: %s","files":["task-brief.md","checkpoint.md","README.md"]}\n' \
-    "${INIT_TIME}" "${ARTICLE_TITLE}" "${CHAPTER_COUNT}" >> "${LOG_FILE}"
-fi
 
 # ── 生成 README.md ──
 cat > "${PROJECT_DIR}/README.md" <<EOF
@@ -102,7 +89,7 @@ cat > "${PROJECT_DIR}/README.md" <<EOF
 
 | 目录 | 用途 |
 |------|------|
-| \`00-project-meta/\` | 任务定义、范围约束、决策日志、断点续传 |
+| \`00-project-meta/\` | 任务定义、范围约束、断点续传 |
 | \`01-collection/\` | 按章节组织的检索材料与可用性评估 |
 | \`02-reasoning/\` | 主张映射、逻辑链、矛盾登记 |
 | \`03-verification/\` | 事实核验、交叉来源核对 |
@@ -110,7 +97,6 @@ cat > "${PROJECT_DIR}/README.md" <<EOF
 | \`05-writing-guide/\` | 章节提纲、论证顺序、风格约束 |
 | \`06-drafts/\` | 各章节初稿与全文汇总 |
 | \`07-delivery/\` | 最终交付稿与参考文献 |
-| \`90-process-logs/\` | 行为日志、时间线 |
 
 ## 当前状态
 
@@ -125,8 +111,8 @@ if [ -f "${CHECKPOINT_SRC}" ]; then
   cp "${CHECKPOINT_SRC}" "${CHECKPOINT_DST}"
   sed -i \
     -e "s|（当前步骤标识，如 step-1-collection）|step-0-init|g" \
-    -e "s|in-progress|completed|g" \
-    -e "s|（最后一条动作 ID，如 A012）|A001|g" \
+    -e "s|\| status \| not-started \||\| status \| completed \||g" \
+    -e "s|\| status \| in-progress \||\| status \| completed \||g" \
     -e "s|（描述当前阶段内的详细进度。须具体到章节/子任务粒度。）|项目初始化完成，所有目录与模板文件已就绪|g" \
     -e "s|（恢复后应执行的第一个具体操作。须精确到文件级别。）|填写 task-brief.md，然后开始第 1 步检索|g" \
     -e "s|YYYY-MM-DD HH:MM|${INIT_TIME}|g" \
@@ -139,19 +125,16 @@ else
 |------|------|
 | current_step | step-0-init |
 | status | completed |
-| last_action_id | A001 |
 | last_updated | ${INIT_TIME} |
+
+## 进度明细
+
+项目初始化完成，所有目录与模板文件已就绪。
 
 ## 下一步动作
 
 填写 task-brief.md，然后开始第 1 步检索
 CPEOF
-fi
-
-# ── 更新 timeline 初始记录 ──
-TIMELINE_FILE="${PROJECT_DIR}/90-process-logs/timeline.md"
-if [ -f "${TIMELINE_FILE}" ]; then
-  sed -i "s|YYYY-MM-DD HH:MM | step-0-init|${INIT_TIME} | step-0-init|g" "${TIMELINE_FILE}" 2>/dev/null || true
 fi
 
 echo ""

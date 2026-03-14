@@ -42,18 +42,17 @@ for ($i = 1; $i -le $ChapterCount; $i++) {
 }
 
 foreach ($folder in @("02-reasoning", "03-verification", "04-academic-validation",
-                       "05-writing-guide", "06-drafts", "07-delivery", "90-process-logs")) {
+                       "05-writing-guide", "06-drafts", "07-delivery")) {
     New-Item -ItemType Directory -Path (Join-Path $ProjectDir $folder) -Force | Out-Null
 }
 
 # ── 复制模板文件 ──
 $templateMap = @{
-    "00-project-meta"       = @("task-brief.md", "scope-and-constraints.md", "decision-log.md")
+    "00-project-meta"       = @("task-brief.md", "scope-and-constraints.md")
     "02-reasoning"          = @("claim-map.md", "logic-chain.md", "contradiction-register.md")
     "03-verification"       = @("fact-check-table.md", "cross-source-check.md", "unresolved-items.md")
     "04-academic-validation" = @("concept-definitions.md", "method-validity.md", "citation-audit.md")
     "05-writing-guide"      = @("chapter-outline.md", "argument-order.md", "style-guardrails.md")
-    "90-process-logs"       = @("actions.log", "timeline.md")
 }
 
 $chapterTemplates = @{
@@ -87,23 +86,7 @@ if (Test-Path $TemplateDir) {
     Write-Warning "模板目录不存在: $TemplateDir，跳过模板复制（目录结构已创建）"
 }
 
-# ── 写入初始化日志（JSON 格式） ──
 $initTime = Get-Date -Format "yyyy-MM-dd HH:mm"
-$logFile = Join-Path $ProjectDir "90-process-logs/actions.log"
-
-if (Test-Path $logFile) {
-    $logEntry = @{
-        action_id  = "A001"
-        time       = $initTime
-        step       = "step-0-init"
-        type       = "INIT"
-        status     = "completed"
-        message    = "项目初始化完成，标题: $ArticleTitle，章节数: $ChapterCount"
-        files      = @("task-brief.md", "checkpoint.md", "README.md")
-    } | ConvertTo-Json -Compress
-
-    Add-Content -Path $logFile -Value $logEntry -Encoding UTF8
-}
 
 # ── 生成 README.md ──
 $readmePath = Join-Path $ProjectDir "README.md"
@@ -120,7 +103,7 @@ $readmeContent = @"
 
 | 目录 | 用途 |
 |------|------|
-| ``00-project-meta/`` | 任务定义、范围约束、决策日志、断点续传 |
+| ``00-project-meta/`` | 任务定义、范围约束、断点续传 |
 | ``01-collection/`` | 按章节组织的检索材料与可用性评估 |
 | ``02-reasoning/`` | 主张映射、逻辑链、矛盾登记 |
 | ``03-verification/`` | 事实核验、交叉来源核对 |
@@ -128,7 +111,6 @@ $readmeContent = @"
 | ``05-writing-guide/`` | 章节提纲、论证顺序、风格约束 |
 | ``06-drafts/`` | 各章节初稿与全文汇总 |
 | ``07-delivery/`` | 最终交付稿与参考文献 |
-| ``90-process-logs/`` | 行为日志、时间线 |
 
 ## 当前状态
 
@@ -145,8 +127,8 @@ if (Test-Path $checkpointSrc) {
     $content = Get-Content -Path $checkpointDst -Raw -Encoding UTF8
     $content = $content `
         -replace '（当前步骤标识，如 step-1-collection）', 'step-0-init' `
+        -replace '\| status \| not-started \|', '| status | completed |' `
         -replace '\| status \| in-progress \|', '| status | completed |' `
-        -replace '（最后一条动作 ID，如 A012）', 'A001' `
         -replace '（描述当前阶段内的详细进度。须具体到章节/子任务粒度。）', '项目初始化完成，所有目录与模板文件已就绪' `
         -replace '（恢复后应执行的第一个具体操作。须精确到文件级别。）', '填写 task-brief.md，然后开始第 1 步检索' `
         -replace 'YYYY-MM-DD HH:MM', $initTime
@@ -159,24 +141,17 @@ if (Test-Path $checkpointSrc) {
 |------|------|
 | current_step | step-0-init |
 | status | completed |
-| last_action_id | A001 |
 | last_updated | $initTime |
+
+## 进度明细
+
+项目初始化完成，所有目录与模板文件已就绪。
 
 ## 下一步动作
 
 填写 task-brief.md，然后开始第 1 步检索
 "@
     Set-Content -Path $checkpointDst -Value $checkpointContent -Encoding UTF8
-}
-
-# ── 更新 timeline 初始记录 ──
-$timelineFile = Join-Path $ProjectDir "90-process-logs/timeline.md"
-if (Test-Path $timelineFile) {
-    $content = Get-Content -Path $timelineFile -Raw -Encoding UTF8
-    $content = $content -replace `
-        '\| YYYY-MM-DD HH:MM \| step-0-init \| 项目初始化完成 \| A001 \| task-brief\.md, checkpoint\.md \|', `
-        "| $initTime | step-0-init | 项目初始化完成 | A001 | task-brief.md, checkpoint.md, README.md |"
-    Set-Content -Path $timelineFile -Value $content -Encoding UTF8
 }
 
 Write-Host ""

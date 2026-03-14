@@ -95,6 +95,6 @@
 - `01-collection/` 下的检索来源与评估
 - `02-reasoning/`、`03-verification/`、`04-academic-validation/` 下的中间分析
 - `05-writing-guide/` 下的写作指导
-- `90-process-logs/` 下的行为日志
+- `00-project-meta/checkpoint.md` 断点续传状态文件
 
 交付完成后不得删除上述过程文件。
